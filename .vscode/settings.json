@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "*.lxm": "json",
+        "*.pde": "java",
+        "*.lxp": "jsonc",
+        "*.tcc": "cpp",
+        "bitset": "cpp"
+    }
+}

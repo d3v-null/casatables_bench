@@ -1,0 +1,39 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cppbuild",
+			"label": "build main",
+			"command": "/usr/bin/g++",
+			"args": [
+				"-fdiagnostics-color=always",
+				"-g",
+				"main.cpp",
+				"-o",
+				"main",
+				"-lcasa_ms",
+				"-lcasa_tables",
+				"-lcasa_casa",
+				"-Wextra",
+				"-Wall",
+				"-W",
+				"-Wpointer-arith",
+				"-Woverloaded-virtual",
+				"-Wwrite-strings",
+				"-pedantic",
+				"-Wno-long-long"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "compiler: /usr/bin/g++"
+		}
+	]
+}
