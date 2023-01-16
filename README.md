@@ -3,20 +3,25 @@ benchmarks of casacore::tables
 
 ## Results
 
+`make bench`
+
 ```
-❯ ./main -i 1000 -t time -w cell -T 128 -B 128 -C 128 -P 4
-iterations: 1000 tabletype: TIME writemode: CELL
-user:   5.27
-system: 30.61
-real:   36.02
-❯ ./main -i 1000 -t time -w cells -T 128 -B 128 -C 128 -P 4
-iterations: 1000 tabletype: TIME writemode: CELLS
-user:   4.97
-system: 29.58
-real:   34.66
-❯ ./main -i 1000 -t time -w column -T 128 -B 128 -C 128 -P 4
-iterations: 1000 tabletype: TIME writemode: COLUMN
-user:   3.87
-system: 29.11
-real:   33.06
+./main -i 100 -t columnwise -w cell
+nTimes=12, nBls=8256, nChs=768, nPols=4, tableType=COLUMNWISE, writeMode=CELL
+iterations: 100
+user:   78.01
+system: 360.19
+real:   439.95
+./main -i 100 -t columnwise -w cells
+nTimes=12, nBls=8256, nChs=768, nPols=4, tableType=COLUMNWISE, writeMode=CELLS
+iterations: 100
+user:   61.18
+system: 357.02
+real:   419.42
+./main -i 100 -t columnwise -w column
+nTimes=12, nBls=8256, nChs=768, nPols=4, tableType=COLUMNWISE, writeMode=COLUMN
+iterations: 100
+user:   60.14
+system: 358.23
+real:   419.87
 ```

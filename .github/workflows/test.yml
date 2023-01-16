@@ -1,0 +1,22 @@
+name: CI
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: install casacore
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: casacore-dev
+        version: 1.0
+    - name: casacore info
+      run: |
+        apt info casacore-dev
+        dpkg -L casacore-dev
+    - name: bench
+      run: |
+        make bench
+      env:
+        LD_LIBRARY_PATH: /usr/lib/x86_64-linux-gnu/
+        LDFLAGS: -L/usr/lib/x86_64-linux-gnu -lcasa_tables -lcasa_casa -lcasa_ms

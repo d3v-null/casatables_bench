@@ -10,9 +10,15 @@
             "request": "launch",
             "program": "${workspaceFolder}/main",
             "args": [
-                "-i", "1",
-                "-t", "time",
+                "-T", "3",
+                "-B", "6",
+                "-C", "5",
+                "-P", "4",
+                "-V",
+                "-i", "0",
+                "-t", "columnwise",
                 "-w", "cells",
+                "-v"
             ],
             "preLaunchTask": "build main",
             "stopAtEntry": false,
