@@ -120,33 +120,39 @@ void synthesize_data(Vector<Double>& times, Array<Float>& uvws, Array<Complex>& 
 }
 
 // fill the time column using the given write mode
-void fill_time_col(Table& tab, Vector<Double>& time, Args& args) {
+void fill_time_col(Table& tab, Vector<Double>& times, Args& args) {
     ScalarColumn<Double> timeCol(tab, "TIME");
-    IPosition shape = time.shape();
+    IPosition shape = times.shape();
+#ifdef DEBUG
     IPosition expectedShape = IPosition(1, args.nTimes * args.nBls);
     if (shape != expectedShape) {
         throw ArrayShapeError(shape, expectedShape, "time shape mismatch");
     }
+#endif
     switch (args.writeMode) {
         case CELL:
             for (int i = 0; i < shape[0]; i++) {
 #ifdef DEBUG
-                std::cout << "filling time row " << i << " of " << shape.last() << " with " << time[i] << endl;
+                if (args.verbosity > 0) {
+                    std::cout << "filling time row " << i << " of " << shape.last() << " with " << times[i] << endl;
+                }
 #endif
-                timeCol.put(i, time[i]);
+                timeCol.put(i, times[i]);
             }
             break;
         case CELLS:
             for (int i = 0; i < args.nTimes; i++) {
-                Slicer chunk( IPosition(1, i * args.nBls), IPosition(1, args.nBls));
+                Slicer chunker( IPosition(1, i * args.nBls), IPosition(1, args.nBls));
 #ifdef DEBUG
-                std::cout << "filling time chunk " << i << " of " << args.nTimes << " with " << time(chunk) << endl;
+                if (args.verbosity > 0) {
+                    std::cout << "filling time chunk " << i << " of " << args.nTimes << " with " << times(chunker) << endl;
+                }
 #endif
-                timeCol.putColumnRange(chunk, time(chunk));
+                timeCol.putColumnRange(chunker, times(chunker));
             }
             break;
         case COLUMN:
-            timeCol.putColumn(time);
+            timeCol.putColumn(times);
             break;
     }
 }
@@ -166,7 +172,9 @@ void fill_uvw_col(Table& tab, Array<Float>& uvws, Args& args) {
                 Array<Float> row = uvws(Slicer(IPosition(2, 0, i), IPosition(2, Slicer::MimicSource, 1)));
                 row.removeDegenerate();
 #ifdef DEBUG
-                std::cout << "filling uvw row " << i << " of " << shape.last() << " with " << row << endl;
+                if (args.verbosity > 0) {
+                    std::cout << "filling uvw row " << i << " of " << shape.last() << " with " << row << endl;
+                }
 #endif
                 uvwCol.put(i, row);
             }
@@ -176,7 +184,9 @@ void fill_uvw_col(Table& tab, Array<Float>& uvws, Args& args) {
                 Slicer chunker( IPosition(2, 0, i * args.nBls), IPosition(2, Slicer::MimicSource, args.nBls));
                 Array<Float> chunked = uvws(chunker);
 #ifdef DEBUG
-                std::cout << "filling uvw chunk " << i << " of " << args.nTimes << " with " << chunked << endl;
+                if (args.verbosity > 0) {
+                    std::cout << "filling uvw chunk " << i << " of " << args.nTimes << " with " << chunked << endl;
+                }
 #endif
                 casacore::RefRows rownrs(i * args.nBls, (i + 1) * args.nBls - 1);
                 uvwCol.putColumnCells(rownrs, chunked);
@@ -190,20 +200,22 @@ void fill_uvw_col(Table& tab, Array<Float>& uvws, Args& args) {
 
 void fill_data_col(Table& tab, Array<Complex>& data, Args& args) {
     ArrayColumn<Complex> dataCol(tab, "DATA");
-    IPosition dataShape = data.shape();
+    IPosition shape = data.shape();
 #ifdef DEBUG
     IPosition expectedShape = IPosition(3, args.nPols, args.nChs, args.nTimes * args.nBls);
-    if (dataShape != expectedShape) {
-        throw ArrayShapeError(dataShape, expectedShape, "data shape mismatch");
+    if (shape != expectedShape) {
+        throw ArrayShapeError(shape, expectedShape, "data shape mismatch");
     }
 #endif
     switch (args.writeMode) {
         case CELL:
-            for (int i = 0; i < dataShape.last(); i++) {
+            for (int i = 0; i < shape.last(); i++) {
                 Array<Complex> row = data(Slicer(IPosition(3, 0, 0, i), IPosition(3, Slicer::MimicSource, Slicer::MimicSource, 1)));
                 row.removeDegenerate();
 #ifdef DEBUG
-                std::cout << "filling data row " << i << " of " << dataShape.last() << " with " << row << endl;
+                if (args.verbosity > 0) {
+                    std::cout << "filling data row " << i << " of " << shape.last() << " with " << row << endl;
+                }
 #endif
                 dataCol.put(i, row);
             }
@@ -213,7 +225,9 @@ void fill_data_col(Table& tab, Array<Complex>& data, Args& args) {
                 Slicer chunker( IPosition(3, 0, 0, i * args.nBls), IPosition(3, Slicer::MimicSource, Slicer::MimicSource, args.nBls));
                 Array<Complex> chunked = data(chunker);
 #ifdef DEBUG
-                std::cout << "filling data chunk " << i << " of " << args.nTimes << " with " << chunked << endl;
+                if (args.verbosity > 0) {
+                    std::cout << "filling data chunk " << i << " of " << args.nTimes << " with " << chunked << endl;
+                }
 #endif
                 casacore::RefRows rownrs(i * args.nBls, (i + 1) * args.nBls - 1);
                 dataCol.putColumnCells(rownrs, chunked);
@@ -222,6 +236,40 @@ void fill_data_col(Table& tab, Array<Complex>& data, Args& args) {
         case COLUMN:
             dataCol.putColumn(data);
             break;
+    }
+}
+
+void fill_rowwise(Table& tab, Vector<Double>& times, Array<Float>& uvws, Array<Complex>& data, Args& args) {
+    ScalarColumn<Double> timeCol(tab, "TIME");
+    ArrayColumn<Float> uvwCol(tab, "UVW");
+    ArrayColumn<Complex> dataCol(tab, "DATA");
+    switch (args.writeMode) {
+        case CELL:
+            for (int i = 0; i < (args.nTimes * args.nBls); i++) {
+                timeCol.put(i, times[i]);
+                Array<Float> uvw = uvws(Slicer(IPosition(2, 0, i), IPosition(2, Slicer::MimicSource, 1)));
+                uvw.removeDegenerate();
+                uvwCol.put(i, uvw);
+                Array<Complex> row = data(Slicer(IPosition(3, 0, 0, i), IPosition(3, Slicer::MimicSource, Slicer::MimicSource, 1)));
+                row.removeDegenerate();
+                dataCol.put(i, row);
+            }
+            break;
+        case CELLS:
+            for (int i = 0; i < args.nTimes; i++) {
+                Slicer chunker( IPosition(1, i * args.nBls), IPosition(1, args.nBls));
+                timeCol.putColumnRange(chunker, times(chunker));
+                chunker = Slicer( IPosition(2, 0, i * args.nBls), IPosition(2, Slicer::MimicSource, args.nBls));
+                Array<Float> uvwChunk = uvws(chunker);
+                casacore::RefRows rownrs(i * args.nBls, (i + 1) * args.nBls - 1);
+                uvwCol.putColumnCells(rownrs, uvwChunk);
+                chunker = Slicer( IPosition(3, 0, 0, i * args.nBls), IPosition(3, Slicer::MimicSource, Slicer::MimicSource, args.nBls));
+                Array<Complex> dataChunk = data(chunker);
+                dataCol.putColumnCells(rownrs, dataChunk);
+            }
+            break;
+        case COLUMN:
+            throw std::runtime_error("can't write rowwise in COLUMN mode");
     }
 }
 
@@ -305,11 +353,11 @@ void compare_data_col(Table& tab, Array<Complex>& data, Args& args) {
                 // if (!complex_eq(actual(index), expected(index))) {
                 if (actual(index) !=  expected(index)) {
                     std::ostringstream errStream;
-                    errStream << "data value mismatch in " << tab.tableName() << " at row=" << i << ", [" << j << "]: " \
+                    errStream << "data value mismatch in " << tab.tableName() << " at row=" << i << ", [" << j << ", " << k << "]: " \
                         << actual(index) << " != " << expected(index) << " (delta=" << fabs(actual(index)-expected(index)) << ")";
                     throw std::runtime_error(errStream.str());
                 } else if (args.verbosity > 0) {
-                    std::cout << "data value match in " << tab.tableName() << " at row=" << i << ", [" << j << "]: " \
+                    std::cout << "data value match in " << tab.tableName() << " at row=" << i << ", [" << j << ", " << k << "]: " \
                         << actual(index) << " == " << expected(index) << endl;
                 }
             }
@@ -448,12 +496,11 @@ int main(int argc, char const *argv[])
                 compare_data_col(tab, data, args);
                 break;
             case ROWWISE:
-                throw std::runtime_error("rowwise not implemented");
-                // fill_rowwise(tab, times, uvws, data, args);
-                // compare_time_col(tab, times, args);
-                // compare_uvw_col(tab, uvws, args);
-                // compare_data_col(tab, data, args);
-                // break;
+                fill_rowwise(tab, times, uvws, data, args);
+                compare_time_col(tab, times, args);
+                compare_uvw_col(tab, uvws, args);
+                compare_data_col(tab, data, args);
+                break;
         }
         printf("PASS\n");
         return 0;
@@ -483,9 +530,8 @@ int main(int argc, char const *argv[])
                 fill_data_col(tab, data, args);
                 break;
             case ROWWISE:
-                throw std::runtime_error("rowwise not implemented");
-                // fill_rowwise(tab, times, uvws, data, args);
-                // break;
+                fill_rowwise(tab, times, uvws, data, args);
+                break;
         }
 
     }

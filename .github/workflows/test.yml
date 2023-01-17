@@ -14,9 +14,12 @@ jobs:
       run: |
         apt info casacore-dev
         dpkg -L casacore-dev
+    - name: validate
+      run: |
+        make validate ARGS="-i 100 -T 16 -B 526 -C 128"
     - name: bench
       run: |
-        make bench
-      env:
-        LD_LIBRARY_PATH: /usr/lib/x86_64-linux-gnu/
-        LDFLAGS: -L/usr/lib/x86_64-linux-gnu -lcasa_tables -lcasa_casa -lcasa_ms
+        make bench ARGS="-i 100 -T 16 -B 526 -C 128"
+      # env:
+      #   LD_LIBRARY_PATH: /usr/lib/x86_64-linux-gnu/
+      #   LDFLAGS: -L/usr/lib/x86_64-linux-gnu -lcasa_tables -lcasa_casa -lcasa_ms
