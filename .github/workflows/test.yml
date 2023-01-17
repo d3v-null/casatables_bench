@@ -5,21 +5,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: install casacore
+    - name: install deps
       uses: awalsh128/cache-apt-pkgs-action@latest
       with:
-        packages: casacore-dev
-        version: 1.0
+        packages: casacore-dev gdb
+        version: 1.1
     - name: casacore info
       run: |
-        apt info casacore-dev
-        dpkg -L casacore-dev
+        wget https://github.com/casacore/casacore/archive/refs/tags/v3.4.0.tar.gz
+        tar -xvf v3.4.0.tar.gz
+        cd casacore-3.4.0
+        export CFLAGS="-O0 -g"
+        export CCFLAGS="$CFLAGS"
+        export SRCDIR="${PWD}"
+        export BUILDDIR="${SRCDIR}/build-debug"
+        mkdir -p ${BUILDDIR}
+        cmake -S$SRCDIR -B${BUILDDIR} \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DBUILD_PYTHON=OFF \
+            -DBUILD_PYTHON3=OFF \
+            -DBUILD_SHARED_LIBS=ON \
+            -DCMAKE_INSTALL_PREFIX=/usr/dbg \
+            -DMODULE="tables"
+        make -j 3 -C ${BUILDDIR}
+        sudo make install -C ${BUILDDIR}
+
     - name: validate
       run: |
-        make validate ARGS="-i 100 -T 16 -B 526 -C 128"
+        make validate ARGS="-V -i 0 -T 16 -B 526 -C 128"
+      env:
+        LD_LIBRARY_PATH: /usr/dbg/lib/
     - name: bench
       run: |
         make bench ARGS="-i 100 -T 16 -B 526 -C 128"
-      # env:
-      #   LD_LIBRARY_PATH: /usr/lib/x86_64-linux-gnu/
-      #   LDFLAGS: -L/usr/lib/x86_64-linux-gnu -lcasa_tables -lcasa_casa -lcasa_ms

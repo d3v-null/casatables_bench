@@ -325,20 +325,20 @@ void compare_uvw_col(Table& tab, Array<Float>& uvws, Args& args) {
 
 void compare_data_col(Table& tab, Array<Complex>& data, Args& args) {
     IPosition shape = data.shape();
-    ArrayColumn<Complex> uvwCol(tab, "DATA");
-    Array<Complex> dataValues = uvwCol.getColumn();
+    ArrayColumn<Complex> dataCol(tab, "DATA");
+    Array<Complex> dataValues = dataCol.getColumn();
     if (shape != dataValues.shape()) {
         std::ostringstream errStream;
         errStream << "data shape mismatch in " << tab.tableName();
         throw ArrayShapeError(shape, dataValues.shape(), errStream.str().c_str());
     }
-    for( int i = 0; (rownr_t)i < (uvwCol.nrow()); i++ ) {
-        Array<Complex> actual = uvwCol(i);
+    for( int i = 0; (rownr_t)i < (dataCol.nrow()); i++ ) {
+        Array<Complex> actual = dataCol(i);
         if (args.verbosity > 0) {
             std::cout << "actual: " << actual << endl;
         }
         // Array<Complex> expected = uvwIter.array();
-        Array<Complex> expected = data(Slicer(IPosition(3, 0, 0, i), IPosition(2, Slicer::MimicSource, Slicer::MimicSource, 1)));
+        Array<Complex> expected = data(Slicer(IPosition(3, 0, 0, i), IPosition(3, Slicer::MimicSource, Slicer::MimicSource, 1)));
         expected.removeDegenerate();
         // check the sizes are the same
         if (actual.shape() != expected.shape()) {
@@ -346,10 +346,17 @@ void compare_data_col(Table& tab, Array<Complex>& data, Args& args) {
             errStream << "data shape mismatch in " << tab.tableName() << " at row=" << i;
             throw ArrayShapeError(actual.shape(), expected.shape(), errStream.str().c_str());
         }
+        // else if (args.verbosity > 0) {
+        //     std::cout << "data shape is " << actual.shape();
+        // }
         // check the values are the same
         for (int j = 0; j < shape[1]; j++) {
             for (int k = 0; k < shape[0]; k++) {
-                IPosition index(1, k, j);
+                IPosition index(2, k, j);
+                // if (args.verbosity > 0) {
+                //     std::cout << "index " << index << endl;
+                //     std::cout << "actual " << actual(index) << " expected " << expected(index) << endl;
+                // }
                 // if (!complex_eq(actual(index), expected(index))) {
                 if (actual(index) !=  expected(index)) {
                     std::ostringstream errStream;
@@ -461,7 +468,8 @@ int main(int argc, char const *argv[])
 
     if (args.verbosity >= 0) {
         cout << "nTimes=" << args.nTimes << ", nBls=" << args.nBls << ", nChs=" << args.nChs << ", nPols=" << args.nPols \
-            << ", tableType=" << tableTypeNames[args.tableType] << ", writeMode=" << writeModeNames[args.writeMode] << endl;
+            << ", tableType=" << tableTypeNames[args.tableType] << ", writeMode=" << writeModeNames[args.writeMode] \
+            << ", iterations=" << iterations << endl;
         flush(cout);
     }
 
@@ -506,14 +514,14 @@ int main(int argc, char const *argv[])
         return 0;
     }
 
-    if (args.verbosity >= 0) {
-        cout << "iterations: " << iterations << endl;
-        flush(cout);
-    }
-
     // gets start time on construction
     Timer timer;
+    int i = 0;
     while (iterations--) {
+        if (args.verbosity >= 0) {
+            cout << "iteration " << i << " of " << iterations << "\r";
+            flush(cout);
+        }
         switch (args.tableType) {
             case TIME:
                 fill_time_col(tab, times, args);
@@ -533,8 +541,8 @@ int main(int argc, char const *argv[])
                 fill_rowwise(tab, times, uvws, data, args);
                 break;
         }
-
     }
+    cout << endl;
 
     std::cout << "user:   " << timer.user () << endl;
     std::cout << "system: " << timer.system () << endl;

@@ -2,7 +2,7 @@
 CC = g++
 CFLAGS = -Wall -Wextra -std=c++11 -Wpointer-arith -Woverloaded-virtual \
 	-Wwrite-strings -pedantic -Wno-long-long -fdiagnostics-color=always
-LIBS = -lcasa_ms -lcasa_tables -lcasa_casa
+LIBS := -lcasa_tables -lcasa_casa
 
 TARGET = main
 
