@@ -10,26 +10,25 @@ jobs:
       with:
         packages: casacore-dev gdb
         version: 1.1
-    - name: casacore info
-      run: |
-        wget https://github.com/casacore/casacore/archive/refs/tags/v3.4.0.tar.gz
-        tar -xvf v3.4.0.tar.gz
-        cd casacore-3.4.0
-        export CFLAGS="-O0 -g"
-        export CCFLAGS="$CFLAGS"
-        export SRCDIR="${PWD}"
-        export BUILDDIR="${SRCDIR}/build-debug"
-        mkdir -p ${BUILDDIR}
-        cmake -S$SRCDIR -B${BUILDDIR} \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DBUILD_PYTHON=OFF \
-            -DBUILD_PYTHON3=OFF \
-            -DBUILD_SHARED_LIBS=ON \
-            -DCMAKE_INSTALL_PREFIX=/usr/dbg \
-            -DMODULE="tables"
-        make -j 3 -C ${BUILDDIR}
-        sudo make install -C ${BUILDDIR}
-
+    # - name: install casacore with debug
+    #   run: |
+    #     wget https://github.com/casacore/casacore/archive/refs/tags/v3.4.0.tar.gz
+    #     tar -xvf v3.4.0.tar.gz
+    #     cd casacore-3.4.0
+    #     export CFLAGS="-O0 -g"
+    #     export CCFLAGS="$CFLAGS"
+    #     export SRCDIR="${PWD}"
+    #     export BUILDDIR="${SRCDIR}/build-debug"
+    #     mkdir -p ${BUILDDIR}
+    #     cmake -S$SRCDIR -B${BUILDDIR} \
+    #         -DCMAKE_BUILD_TYPE=Debug \
+    #         -DBUILD_PYTHON=OFF \
+    #         -DBUILD_PYTHON3=OFF \
+    #         -DBUILD_SHARED_LIBS=ON \
+    #         -DCMAKE_INSTALL_PREFIX=/usr/dbg \
+    #         -DMODULE="tables"
+    #     make -j 3 -C ${BUILDDIR}
+    #     sudo make install -C ${BUILDDIR}
     - name: validate
       run: |
         make validate ARGS="-V -i 0 -T 16 -B 526 -C 128"

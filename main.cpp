@@ -11,7 +11,7 @@ using namespace casacore;
 #define N_CHANS (24 * 32)
 #define N_POLS 4
 
-// preprocessor hacks to reuse a list of names in an enum and a list of names
+// preprocessor hacks to reuse a list of names in an enum and a char[][]
 #define TABLE_TYPES \
     X(TIME), \
     X(UVW), \
@@ -519,7 +519,7 @@ int main(int argc, char const *argv[])
     int i = 0;
     while (iterations--) {
         if (args.verbosity >= 0) {
-            cout << "iteration " << i << " of " << iterations << "\r";
+            cout << "iteration " << i++ << " of " << iterations << "\r";
             flush(cout);
         }
         switch (args.tableType) {
