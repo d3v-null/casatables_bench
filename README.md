@@ -26,8 +26,10 @@ build with `make release` (or `make debug` for debugging)
 Usage: ./main [-h] [-v] [-V] [-i <iterations>] [-t <tabletype>] [-w <writemode>] [-T <times>] [-B <baselines>] [-C <chans>] [-P <pols>]
   -h: print this help message
   -v: increase verbosity
+  -q: decrease verbosity
   -V: validate the table values
-  -i <iterations>: number of iterations (default: 100)
+  -s: stream junk to the table instead of slicing a pre-allocated array
+  -i <iterations>: number of iterations (default: 100 )
   -t <tabletype>: table type (default: COLUMNWISE)
     options: TIME, UVW, DATA, COLUMNWISE, ROWWISE
   -w <writemode>: write mode (default: CELL)

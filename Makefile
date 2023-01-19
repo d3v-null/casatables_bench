@@ -29,6 +29,10 @@ validate:
 
 bench: release
 bench:
+	./main $(ARGS) -s -t columnwise -w cell
+	./main $(ARGS) -s -t columnwise -w cells
+	./main $(ARGS) -s -t rowwise -w cell
+	./main $(ARGS) -s -t rowwise -w cells
 	./main $(ARGS) -t columnwise -w cell
 	./main $(ARGS) -t columnwise -w cells
 	./main $(ARGS) -t columnwise -w column
