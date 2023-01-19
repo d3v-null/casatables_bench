@@ -153,7 +153,15 @@ Table setup_table(const String& tableName, Args args) {
 
     SetupNewTable newtab(tableName, td, Table::New);
 
+    Timer timer;
     Table tab(newtab, args.nTimes * args.nBls);
+    if (args.verbosity > 0) {
+        std::cout << "table setup time: " << endl;
+        std::cout << "- user:   " << timer.user () << "s" << endl;
+        std::cout << "- system: " << timer.system () << "s" << endl;
+        std::cout << "- real:   " << timer.real () << "s" << endl;
+    }
+
     return tab;
 }
 
@@ -677,11 +685,12 @@ int main(int argc, char const *argv[])
                 break;
         }
     }
-    cerr << "                          \r";
-
-    std::cout << "user:   " << timer.user () << endl;
-    std::cout << "system: " << timer.system () << endl;
-    std::cout << "real:   " << timer.real () << endl;
+    if (args.nIters > 0) {
+        cerr << "                          \r";
+        std::cout << "user:   " << timer.user () << "s" << endl;
+        std::cout << "system: " << timer.system () << "s" << endl;
+        std::cout << "real:   " << timer.real () << "s" << endl;
+    }
 
     return 0;
 }
