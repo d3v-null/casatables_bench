@@ -81,3 +81,38 @@ user:   582.35
 system: 3224.14
 real:   3822.05
 ```
+
+## Tableinfo
+
+ms created with Cotter: `make tableinfo && ./tableinfo <table>.ms`
+
+```
+Number of rows: 122016
+Number of columns: 23
+F:.isFixedShape(), S:.isScalar(), A:.isArray(), T:.isTable(),
+D:.options()&Direct, U:.options()&Undefined
+Name            F S A T D U
+UVW             F   A   D
+FLAG                A
+FLAG_CATEGORY       A
+WEIGHT              A
+SIGMA               A
+ANTENNA1        F S
+ANTENNA2        F S
+ARRAY_ID        F S
+DATA_DESC_ID    F S
+EXPOSURE        F S
+FEED1           F S
+FEED2           F S
+FIELD_ID        F S
+FLAG_ROW        F S
+INTERVAL        F S
+OBSERVATION_ID  F S
+PROCESSOR_ID    F S
+SCAN_NUMBER     F S
+STATE_ID        F S
+TIME            F S
+TIME_CENTROID   F S
+DATA            F   A
+WEIGHT_SPECTRUM F   A
+```

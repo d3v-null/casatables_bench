@@ -10,8 +10,10 @@ ARGS := ""
 
 main: main.cpp
 	$(CC) $(CFLAGS) -o main main.cpp $(LIBS)
+tableinfo: tableinfo.cpp
+	$(CC) $(CFLAGS) -o tableinfo tableinfo.cpp $(LIBS)
 
-all: main
+all: main tableinfo
 
 debug: CFLAGS += -DDEBUG -g
 debug: all
