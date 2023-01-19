@@ -18,6 +18,26 @@ Write mode options:
 - `CELLS` - write all of the cells for a given timestep in groups using `putColumnCells`
 - `COLUMNS` - write an entire column in one go using `putColumn`
 
+## Usage
+
+build with `make release` (or `make debug` for debugging)
+
+```txt
+Usage: ./main [-h] [-v] [-V] [-i <iterations>] [-t <tabletype>] [-w <writemode>] [-T <times>] [-B <baselines>] [-C <chans>] [-P <pols>]
+  -h: print this help message
+  -v: increase verbosity
+  -V: validate the table values
+  -i <iterations>: number of iterations (default: 100)
+  -t <tabletype>: table type (default: COLUMNWISE)
+    options: TIME, UVW, DATA, COLUMNWISE, ROWWISE
+  -w <writemode>: write mode (default: CELL)
+    options: CELL, CELLS, COLUMN
+  -T <times>: number of times (default: 12)
+  -B <baselines>: number of baselines (default: 8256)
+  -C <chans>: number of channels (default: 768)
+  -P <pols>: number of polarizations (default: 4)
+```
+
 ## Results
 
 1000 iterations, `nTimes=12, nBls=8256, nChs=768, nPols=4`
@@ -25,10 +45,10 @@ Write mode options:
 | table type | write mode | user | system | real |
 |------------|------------|------|--------|------|
 | rowwise | cell | 439.83 | 1118.57 | 1562.98 |
-| rowwise | cells | 582.35 | 3224.14 | 3822.05 |
-| columnwise | cell | 740.21 | 4207.47 | 4965.69 |
-| columnwise | cells | 599.05 | 3557.64 | 4170.86 |
 | columnwise | column | 582.01 | 3180.09 | 3773.46 |
+| rowwise | cells | 582.35 | 3224.14 | 3822.05 |
+| columnwise | cells | 599.05 | 3557.64 | 4170.86 |
+| columnwise | cell | 740.21 | 4207.47 | 4965.69 |
 
 raw output of `make bench`
 

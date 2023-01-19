@@ -29,10 +29,14 @@ using namespace casacore;
 typedef enum TableType {
     TABLE_TYPES
 } TableType;
+#define NUM_TABLETYPES (sizeof(tableTypeNames) / sizeof(tableTypeNames[0]))
+#define DEFAULT_TABLETYPE COLUMNWISE
 
 typedef enum WriteMode {
     WRITE_MODES
 } WriteMode;
+#define NUM_WRITEMODES (sizeof(writeModeNames) / sizeof(writeModeNames[0]))
+#define DEFAULT_WRITEMODE CELL
 #undef X
 
 #define X(name) #name
@@ -46,7 +50,7 @@ char const *writeModeNames[] = {
 
 TableType tableTypeFromName(std::string& name) {
     for (auto & c: name) c = toupper(c);
-    for (int i = 0; (long unsigned int)i < sizeof(tableTypeNames) / sizeof(tableTypeNames[0]); i++) {
+    for (unsigned int i = 0; i < NUM_TABLETYPES; i++) {
         if (name == tableTypeNames[i]) {
             return (TableType) i;
         }
@@ -56,7 +60,7 @@ TableType tableTypeFromName(std::string& name) {
 
 WriteMode writeModeFromName(std::string& name) {
     for (auto & c: name) c = toupper(c);
-    for (int i = 0; (long unsigned int)i < sizeof(writeModeNames) / sizeof(writeModeNames[0]); i++) {
+    for (unsigned int i = 0; i < NUM_WRITEMODES; i++) {
         if (name == writeModeNames[i]) {
             return (WriteMode) i;
         }
@@ -64,6 +68,36 @@ WriteMode writeModeFromName(std::string& name) {
     throw std::runtime_error("unknown write mode: " + name);
 }
 
+void usage(char const *argv[]) {
+    std::cout << "Usage: " << argv[0] << " [-h] [-v] [-V] [-i <iterations>] [-t <tabletype>] [-w <writemode>]" \
+        << " [-T <times>] [-B <baselines>] [-C <chans>] [-P <pols>]\n" \
+        << "  -h: print this help message\n" \
+        << "  -v: increase verbosity\n" \
+        << "  -V: validate the table values\n" \
+        << "  -i <iterations>: number of iterations (default: 100)\n" \
+        << "  -t <tabletype>: table type (default: " << tableTypeNames[DEFAULT_TABLETYPE] << ")\n" \
+        << "    options: ";
+        for (unsigned int i = 0; i < NUM_TABLETYPES; i++) {
+            std::cout << tableTypeNames[i];
+            if (i < NUM_TABLETYPES-1) {
+                std::cout << ", ";
+            }
+        }
+        std::cout << "\n" \
+        << "  -w <writemode>: write mode (default: " << writeModeNames[DEFAULT_WRITEMODE] << ")\n" \
+        << "    options: ";
+        for (unsigned int i = 0; i < NUM_WRITEMODES; i++) {
+            std::cout << writeModeNames[i];
+            if (i < NUM_WRITEMODES-1) {
+                std::cout << ", ";
+            }
+        }
+        std::cout << "\n" \
+        << "  -T <times>: number of times (default: " << N_TIMES << ")\n" \
+        << "  -B <baselines>: number of baselines (default: " << N_BLS << ")\n" \
+        << "  -C <chans>: number of channels (default: " << N_CHANS << ")\n" \
+        << "  -P <pols>: number of polarizations (default: " << N_POLS << ")\n";
+}
 
 typedef struct Args {
     int nTimes;
@@ -73,6 +107,7 @@ typedef struct Args {
     int verbosity;
     WriteMode writeMode;
     TableType tableType;
+    bool validate;
 } Args;
 
 // A table containing:
@@ -119,35 +154,19 @@ void synthesize_data(Vector<Double>& times, Array<Float>& uvws, Array<Complex>& 
     }
 }
 
-// fill the time column using the given write mode
+// fill the time column with the given times array and write mode
 void fill_time_col(Table& tab, Vector<Double>& times, Args& args) {
     ScalarColumn<Double> timeCol(tab, "TIME");
     IPosition shape = times.shape();
-#ifdef DEBUG
-    IPosition expectedShape = IPosition(1, args.nTimes * args.nBls);
-    if (shape != expectedShape) {
-        throw ArrayShapeError(shape, expectedShape, "time shape mismatch");
-    }
-#endif
     switch (args.writeMode) {
         case CELL:
             for (int i = 0; i < shape[0]; i++) {
-#ifdef DEBUG
-                if (args.verbosity > 0) {
-                    std::cout << "filling time row " << i << " of " << shape.last() << " with " << times[i] << endl;
-                }
-#endif
                 timeCol.put(i, times[i]);
             }
             break;
         case CELLS:
             for (int i = 0; i < args.nTimes; i++) {
                 Slicer chunker( IPosition(1, i * args.nBls), IPosition(1, args.nBls));
-#ifdef DEBUG
-                if (args.verbosity > 0) {
-                    std::cout << "filling time chunk " << i << " of " << args.nTimes << " with " << times(chunker) << endl;
-                }
-#endif
                 timeCol.putColumnRange(chunker, times(chunker));
             }
             break;
@@ -323,6 +342,7 @@ void compare_uvw_col(Table& tab, Array<Float>& uvws, Args& args) {
     }
 }
 
+// check the values in the data col match the data array
 void compare_data_col(Table& tab, Array<Complex>& data, Args& args) {
     IPosition shape = data.shape();
     ArrayColumn<Complex> dataCol(tab, "DATA");
@@ -346,18 +366,10 @@ void compare_data_col(Table& tab, Array<Complex>& data, Args& args) {
             errStream << "data shape mismatch in " << tab.tableName() << " at row=" << i;
             throw ArrayShapeError(actual.shape(), expected.shape(), errStream.str().c_str());
         }
-        // else if (args.verbosity > 0) {
-        //     std::cout << "data shape is " << actual.shape();
-        // }
         // check the values are the same
         for (int j = 0; j < shape[1]; j++) {
             for (int k = 0; k < shape[0]; k++) {
                 IPosition index(2, k, j);
-                // if (args.verbosity > 0) {
-                //     std::cout << "index " << index << endl;
-                //     std::cout << "actual " << actual(index) << " expected " << expected(index) << endl;
-                // }
-                // if (!complex_eq(actual(index), expected(index))) {
                 if (actual(index) !=  expected(index)) {
                     std::ostringstream errStream;
                     errStream << "data value mismatch in " << tab.tableName() << " at row=" << i << ", [" << j << ", " << k << "]: " \
@@ -372,16 +384,11 @@ void compare_data_col(Table& tab, Array<Complex>& data, Args& args) {
     }
 }
 
-void usage(char const *argv[]) {
-    std::cout << "Usage: " << argv[0] << "[-h] [-V] [-i <iterations>] [-t <tabletype>] [-w <writemode>]" \
-        << " [-T <times>] [-B <baselines>] [-C <chans>] [-P <pols>]\n";
-}
-
 int main(int argc, char const *argv[])
 {
     // default arg values
     int iterations = 100;
-    Args args = {N_TIMES, N_BLS, N_CHANS, N_POLS, 0, CELL, COLUMNWISE};
+    Args args = {N_TIMES, N_BLS, N_CHANS, N_POLS, 0, DEFAULT_WRITEMODE, DEFAULT_TABLETYPE, false};
     bool validate = false;
 
     // parse argv
