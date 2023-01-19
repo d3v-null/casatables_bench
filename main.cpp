@@ -123,9 +123,10 @@ Table setup_table(const String& tableName, Args args) {
     if (args.verbosity > 0) {
         cout << "setting up table" << endl;
     }
-    Directory dir("data");
+    Directory dir(tableName);
     if (dir.exists()) {
-        dir.remove();
+        if (args.verbosity > 0) cout << "removing existing table" << endl;
+        dir.removeRecursive();
     }
     // from https://casacore.github.io/casacore/group__Tables__module.html#Tables:creation
     // Step1 -- Build the table description.
@@ -617,7 +618,7 @@ int main(int argc, char const *argv[])
 
     synthesize_data(times, uvws, data, args);
 
-    Table tab = setup_table("table.data", args);
+    Table tab = setup_table("/tmp/table.data/", args);
 
     if (args.validate) {
         switch (args.tableType) {
