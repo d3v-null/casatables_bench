@@ -131,9 +131,9 @@ Table setup_table(const String& tableName, Args args) {
     // Step1 -- Build the table description.
     TableDesc td("tTableDesc", "1D", TableDesc::Scratch);
     td.comment() = "A table with a single column of double values.";
-    ScalarColumnDesc<Double> timeColDesc("TIME", ColumnDesc::Direct);
-    ArrayColumnDesc<Float> uvwColDesc("UVW", IPosition(1, 3), ColumnDesc::Direct);
-    ArrayColumnDesc<Complex> dataColDesc("DATA", IPosition(2, args.nPols, args.nChs), ColumnDesc::Direct);
+    ScalarColumnDesc<Double> timeColDesc("TIME");
+    ArrayColumnDesc<Float> uvwColDesc("UVW", IPosition(1, 3), ColumnDesc::Direct | ColumnDesc::FixedShape);
+    ArrayColumnDesc<Complex> dataColDesc("DATA", IPosition(2, args.nPols, args.nChs), ColumnDesc::FixedShape);
     switch (args.tableType) {
         case TIME:
             td.addColumn (timeColDesc);
